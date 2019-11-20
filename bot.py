@@ -48,7 +48,7 @@ STATE_BACK_TO_GAME = 18
 def getImagePos(img):
     pos = ui.locateOnScreen(img, confidence=0.8)
     if (pos != None):
-        return ui.freeArea(pos)
+        return ui.center(pos)
     return None
 
 
