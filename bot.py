@@ -195,16 +195,6 @@ class Bot:
             else:
                 nextThink = 0.1
 
-        """
-        elif (self.state == STATE_RESUPPLY):
-            # Resupply main echelon
-            if (clickAt(RESUPPLY)):
-                nextThink = 0.5
-                self.state = STATE_PLANNING
-            else:
-                nextThink = 0.1
-        """
-
         elif (self.state == STATE_PLANNING):
             # Resupply main echelon
             if (doTask(PLANNING, PLANNING_ACT)):
