@@ -108,14 +108,12 @@ class Bot:
     def loop(self):
         nextThink = 1.0
 
-        if (clickAt(LOGISTIC_RESULT)):
-            time.sleep(1.0)
-            clickAt(OK_LOGISTIC)
-            nextThink = 1.0
-            self.state = STATE_BEGIN_COMBAT
-
-        elif (self.state == STATE_BEGIN_COMBAT):
-            if (doTask(COMBAT, ZERO_TWO)):
+        if (self.state == STATE_BEGIN_COMBAT):
+            if (clickAt(LOGISTIC_RESULT)):
+                time.sleep(1.0)
+                clickAt(OK_LOGISTIC)
+                nextThink = 1.0
+            elif (doTask(COMBAT, ZERO_TWO)):
                 nextThink = 0.8
                 self.state = STATE_START_BATTLE
             else:
@@ -141,7 +139,7 @@ class Bot:
 
         elif (self.state == STATE_PREPARE_FORMATION):
             if (doTask(CMD_POST, FORMATION)):
-                nextThink = 0.8
+                nextThink = 0.5
                 self.state = STATE_SET_FORMATION
             else:
                 nextThink = 0.1
@@ -151,7 +149,7 @@ class Bot:
                 print("Low hp")
                 time.sleep(0.8)
                 clickAt(OK_REPAIR)
-                nextThink = 0.8
+                nextThink = 0.5
             elif (clickAt(FORMATION)):
                 nextThink = 1.5
                 self.state = STATE_SWAP_DPS
@@ -224,7 +222,7 @@ class Bot:
         elif (self.state == STATE_VIEW_DPS):
             # View dps echelon
             if (doTask(HELIPORT, RESUPPLY, doubleClick=True)):
-                nextThink = 0.5
+                nextThink = 0.4
                 self.state = STATE_RESUPPLY
             else:
                 nextThink = 0.1
@@ -232,7 +230,7 @@ class Bot:
         elif (self.state == STATE_RESUPPLY):
             # View dps echelon
             if (doTask(RESUPPLY, PLANNING)):
-                ui.sleep(0.5)
+                ui.sleep(1.0)
                 clickAt(CMD_POST)
                 nextThink = 0.5
                 self.state = STATE_PLANNING
@@ -333,11 +331,10 @@ class Bot:
         time.sleep(nextThink)
 
     def main(self):
-        time.sleep(3.0)
-
         self.state = STATE_BEGIN_COMBAT
 
         try:
+            time.sleep(3.0)
             while (True):
                 self.loop()
         except KeyboardInterrupt:
