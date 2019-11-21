@@ -1,6 +1,5 @@
 import pyautogui as ui
 import time
-import numpy as np
 from random import randint
 
 # images
@@ -101,23 +100,28 @@ def doTask(img, result, doubleClick=False):
 
 class Bot:
     def __init__(self):
-        self.state = STATE_NONE
         self.center = (700, 400)
         self.freeArea = (1161, 449)
 
+        # State
+        self.state = STATE_NONE
+        self.attempt = 0
+
     def loop(self):
+        # Variables
         nextThink = 1.0
 
+        # States
         if (self.state == STATE_BEGIN_COMBAT):
             if (clickAt(LOGISTIC_RESULT)):
                 time.sleep(1.0)
                 clickAt(OK_LOGISTIC)
                 nextThink = 1.0
             elif (doTask(COMBAT, ZERO_TWO)):
-                nextThink = 0.8
+                nextThink = 0.0
                 self.state = STATE_START_BATTLE
             else:
-                nextThink = 0.4
+                nextThink = 0.1
 
         elif (self.state == STATE_START_BATTLE):
             # Spawn main echelon
@@ -132,14 +136,16 @@ class Bot:
                     print("Retiring..")
 
                 else:
-                    nextThink = 0.1
+                    nextThink = 0.5
                     self.state = STATE_PREPARE_FORMATION
+                    self.attempt += 1
+                    print("Attempt", self.attempt)
             else:
                 nextThink = 0.1
 
         elif (self.state == STATE_PREPARE_FORMATION):
             if (doTask(CMD_POST, FORMATION)):
-                nextThink = 0.5
+                nextThink = 0.0
                 self.state = STATE_SET_FORMATION
             else:
                 nextThink = 0.1
@@ -147,9 +153,9 @@ class Bot:
         elif (self.state == STATE_SET_FORMATION):
             if (clickAt(LOW_HP, confidence=0.9)):
                 print("Low hp")
-                time.sleep(0.8)
+                time.sleep(1.0)
                 clickAt(OK_REPAIR)
-                nextThink = 0.5
+                nextThink = 0.8
             elif (clickAt(FORMATION)):
                 nextThink = 1.5
                 self.state = STATE_SWAP_DPS
@@ -165,16 +171,16 @@ class Bot:
 
         elif (self.state == STATE_SELECT_DPS):
             if (clickAt(LEADER, offset=(50, -100))):
-                nextThink = 0.4
+                nextThink = 0.1
                 self.state = STATE_BACK_TO_GAME
             else:
                 ui.moveTo(withRandPos(self.center, 40))
-                ui.scroll(-50)
+                ui.scroll(-80)
                 nextThink = 0.1
 
         elif (self.state == STATE_BACK_TO_GAME):
-            if (clickAt(BACK_BTN)):
-                nextThink = 0.4
+            if (doTask(BACK_BTN, CMD_POST)):
+                nextThink = 0.0
                 self.state = STATE_SPAWN_MAIN_ECHELON
             else:
                 nextThink = 0.1
@@ -182,7 +188,7 @@ class Bot:
         elif (self.state == STATE_SPAWN_MAIN_ECHELON):
             # Spawn main echelon
             if (doTask(CMD_POST, OK_BTN)):
-                nextThink = 0.4
+                nextThink = 0.2
                 self.state = STATE_DEPLOY_MAIN_ECHELON
             else:
                 nextThink = 0.1
@@ -190,7 +196,7 @@ class Bot:
         elif (self.state == STATE_DEPLOY_MAIN_ECHELON):
             # Deploy echelon
             if (doTask(OK_BTN, START)):
-                nextThink = 0.4
+                nextThink = 0.0
                 self.state = STATE_START_GAME
             else:
                 nextThink = 0.1
@@ -198,7 +204,7 @@ class Bot:
         elif (self.state == STATE_START_GAME):
             # Start game
             if (clickAt(START)):
-                nextThink = 0.5
+                nextThink = 0.2
                 self.state = STATE_SPAWN_SECOND_ECHELON
             else:
                 nextThink = 0.1
@@ -206,7 +212,7 @@ class Bot:
         elif (self.state == STATE_SPAWN_SECOND_ECHELON):
             # Spawn second echelon
             if (doTask(HELIPORT, OK_BTN)):
-                nextThink = 0.5
+                nextThink = 0.2
                 self.state = STATE_DEPLOY_SECOND_ECHELON
             else:
                 nextThink = 0.1
@@ -214,7 +220,7 @@ class Bot:
         elif (self.state == STATE_DEPLOY_SECOND_ECHELON):
             # Deploy echelon
             if (doTask(OK_BTN, HELIPORT)):
-                nextThink = 0.5
+                nextThink = 0.1
                 self.state = STATE_VIEW_DPS
             else:
                 nextThink = 0.1
@@ -222,7 +228,7 @@ class Bot:
         elif (self.state == STATE_VIEW_DPS):
             # View dps echelon
             if (doTask(HELIPORT, RESUPPLY, doubleClick=True)):
-                nextThink = 0.4
+                nextThink = 0.1
                 self.state = STATE_RESUPPLY
             else:
                 nextThink = 0.1
@@ -230,9 +236,9 @@ class Bot:
         elif (self.state == STATE_RESUPPLY):
             # View dps echelon
             if (doTask(RESUPPLY, PLANNING)):
-                ui.sleep(1.0)
+                ui.sleep(0.8)
                 clickAt(CMD_POST)
-                nextThink = 0.5
+                nextThink = 0.1
                 self.state = STATE_PLANNING
             else:
                 nextThink = 0.1
@@ -240,7 +246,7 @@ class Bot:
         elif (self.state == STATE_PLANNING):
             # Resupply main echelon
             if (doTask(PLANNING, PLANNING_ACT)):
-                nextThink = 0.5
+                nextThink = 0.2
                 self.state = STATE_SELECT_POINT1
             else:
                 nextThink = 0.1
@@ -248,22 +254,22 @@ class Bot:
         elif (self.state == STATE_SELECT_POINT1):
             # Resupply main echelon
             if (clickAt(POINT1, offset=(-40, 0))):
-                nextThink = 0.5
+                nextThink = 0.2
                 self.state = STATE_SELECT_POINT2
             else:
-                nextThink = 0.5
+                nextThink = 0.2
                 ui.moveTo(withRandPos(self.freeArea, 40))
-                ui.scroll(50)
+                ui.scroll(150)
 
         elif (self.state == STATE_SELECT_POINT2):
             # Resupply main echelon
             if (clickAt(POINT2, offset=(-20, -20))):
-                nextThink = 0.5
+                nextThink = 0.4
                 self.state = STATE_EXECUTE
             else:
-                nextThink = 0.5
+                nextThink = 0.2
                 ui.moveTo(withRandPos(self.freeArea, 30))
-                ui.scroll(50)
+                ui.scroll(150)
 
         elif (self.state == STATE_EXECUTE):
             # Resupply main echelon
@@ -278,18 +284,18 @@ class Bot:
             battleRes = getImagePos(BATTLE_RESULT)
 
             if (returnPos):
-                time.sleep(3.0)
-                for i in range(6):
+                time.sleep(1.5)
+                for i in range(5):
                     ui.click(withRandPos(self.freeArea, 40))
-                    time.sleep(0.6)
+                    time.sleep(0.5)
 
                 nextThink = 1.0
                 self.state = STATE_START_BATTLE
 
             elif (battleRes):
-                for i in range(6):
+                for i in range(5):
                     ui.click(withRandPos(self.freeArea, 40))
-                    time.sleep(0.5)
+                    time.sleep(0.3)
 
             else:
                 nextThink = 0.1
@@ -320,7 +326,7 @@ class Bot:
             print("DISMANTLE")
 
             clickAt(DISMANTLE)
-            time.sleep(1.0)
+            time.sleep(2.0)
 
             print("RETURN_BASE")
             clickAt(RETURN_BASE)
@@ -328,10 +334,12 @@ class Bot:
             self.state = STATE_BEGIN_COMBAT
             nextThink = 3.0
 
-        time.sleep(nextThink)
+        if (nextThink > 0.0):
+            time.sleep(nextThink)
 
     def main(self):
         self.state = STATE_BEGIN_COMBAT
+        ui.PAUSE = 0.0
 
         try:
             time.sleep(3.0)
