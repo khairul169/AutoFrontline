@@ -36,6 +36,7 @@ OK_REPAIR = './img/ok_repair.png'
 
 LOGISTIC_RESULT = './img/logistic.png'
 OK_LOGISTIC = './img/ok_logistic.png'
+LOAD_SUPPLY = './img/load_supply.png'
 
 # states
 STATE_NONE = 0
@@ -138,8 +139,6 @@ class Bot:
                 else:
                     nextThink = 0.5
                     self.state = STATE_PREPARE_FORMATION
-                    self.attempt += 1
-                    print("Attempt", self.attempt)
             else:
                 nextThink = 0.1
 
@@ -152,7 +151,7 @@ class Bot:
 
         elif (self.state == STATE_SET_FORMATION):
             if (clickAt(LOW_HP, confidence=0.9)):
-                print("Low hp")
+                print("Repairing...")
                 time.sleep(1.0)
                 clickAt(OK_REPAIR)
                 nextThink = 0.8
@@ -176,7 +175,7 @@ class Bot:
             else:
                 ui.moveTo(withRandPos(self.center, 40))
                 ui.scroll(-80)
-                nextThink = 0.1
+                nextThink = 0.2
 
         elif (self.state == STATE_BACK_TO_GAME):
             if (doTask(BACK_BTN, CMD_POST)):
@@ -204,8 +203,11 @@ class Bot:
         elif (self.state == STATE_START_GAME):
             # Start game
             if (clickAt(START)):
-                nextThink = 0.2
+                nextThink = 1.0
                 self.state = STATE_SPAWN_SECOND_ECHELON
+                
+                self.attempt += 1
+                print("Attempt", self.attempt)
             else:
                 nextThink = 0.1
 
@@ -228,7 +230,7 @@ class Bot:
         elif (self.state == STATE_VIEW_DPS):
             # View dps echelon
             if (doTask(HELIPORT, RESUPPLY, doubleClick=True)):
-                nextThink = 0.1
+                nextThink = 0.0
                 self.state = STATE_RESUPPLY
             else:
                 nextThink = 0.1
@@ -236,8 +238,13 @@ class Bot:
         elif (self.state == STATE_RESUPPLY):
             # View dps echelon
             if (doTask(RESUPPLY, PLANNING)):
-                ui.sleep(0.8)
-                clickAt(CMD_POST)
+                isLoading = True
+
+                while (isLoading):
+                    ui.sleep(1.0)
+                    clickAt(CMD_POST)
+                    isLoading = getImagePos(LOAD_SUPPLY)
+                
                 nextThink = 0.1
                 self.state = STATE_PLANNING
             else:
@@ -259,17 +266,17 @@ class Bot:
             else:
                 nextThink = 0.2
                 ui.moveTo(withRandPos(self.freeArea, 40))
-                ui.scroll(150)
+                ui.scroll(100)
 
         elif (self.state == STATE_SELECT_POINT2):
             # Resupply main echelon
             if (clickAt(POINT2, offset=(-20, -20))):
-                nextThink = 0.4
+                nextThink = 0.1
                 self.state = STATE_EXECUTE
             else:
                 nextThink = 0.2
                 ui.moveTo(withRandPos(self.freeArea, 30))
-                ui.scroll(150)
+                ui.scroll(100)
 
         elif (self.state == STATE_EXECUTE):
             # Resupply main echelon
@@ -285,7 +292,7 @@ class Bot:
 
             if (returnPos):
                 time.sleep(1.5)
-                for i in range(5):
+                for i in range(6):
                     ui.click(withRandPos(self.freeArea, 40))
                     time.sleep(0.5)
 
@@ -293,7 +300,7 @@ class Bot:
                 self.state = STATE_START_BATTLE
 
             elif (battleRes):
-                for i in range(5):
+                for i in range(6):
                     ui.click(withRandPos(self.freeArea, 40))
                     time.sleep(0.3)
 
@@ -303,32 +310,32 @@ class Bot:
         elif (self.state == STATE_RETIRE):
             time.sleep(3.0)
 
-            print("RETIREMENT")
+            #print("RETIREMENT")
 
             clickAt(RETIREMENT)
             time.sleep(0.5)
 
-            print("SELECT_DOLL")
+            #print("SELECT_DOLL")
 
             clickAt(SELECT_DOLL)
             time.sleep(1.0)
 
-            print("SMART_SELECT")
+            #print("SMART_SELECT")
 
             clickAt(SMART_SELECT)
             time.sleep(0.5)
 
-            print("OK_RETIRE")
+            #print("OK_RETIRE")
 
             clickAt(OK_RETIRE)
             time.sleep(0.5)
 
-            print("DISMANTLE")
+            #print("DISMANTLE")
 
             clickAt(DISMANTLE)
             time.sleep(2.0)
 
-            print("RETURN_BASE")
+            #print("RETURN_BASE")
             clickAt(RETURN_BASE)
 
             self.state = STATE_BEGIN_COMBAT
