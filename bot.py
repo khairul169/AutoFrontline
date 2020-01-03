@@ -107,6 +107,8 @@ class Bot:
         # State
         self.state = STATE_NONE
         self.attempt = 0
+        self.repair = False
+        self.chapterFound = False
 
     def loop(self):
         # Variables
@@ -119,28 +121,39 @@ class Bot:
                 clickAt(OK_LOGISTIC)
                 nextThink = 1.0
             elif (doTask(COMBAT, ZERO_TWO)):
-                nextThink = 0.0
+                nextThink = 0.5
                 self.state = STATE_START_BATTLE
             else:
                 nextThink = 0.1
 
         elif (self.state == STATE_START_BATTLE):
+            chapterBtn = getImagePos(ZERO_TWO)
+            
+            
             # Spawn main echelon
-            if (doTask(ZERO_TWO, BATTLE)):
-                time.sleep(0.5)
+            if (not self.chapterFound):
+                if (chapterBtn):
+                    self.chapterFound = True
+                nextThink = 0.2
+            
+            elif (doTask(ZERO_TWO, BATTLE)):
+                time.sleep(0.4)
                 clickAt(BATTLE)
-                time.sleep(0.5)
+                time.sleep(0.4)
 
                 if (clickAt(TDOLL_FULL)):
                     nextThink = 1.0
                     self.state = STATE_RETIRE
+                    #self.state = STATE_BEGIN_COMBAT
                     print("Retiring..")
 
                 else:
                     nextThink = 0.5
                     self.state = STATE_PREPARE_FORMATION
+                
+                self.chapterFound = False
             else:
-                nextThink = 0.1
+                nextThink = 0.2
 
         elif (self.state == STATE_PREPARE_FORMATION):
             if (doTask(CMD_POST, FORMATION)):
@@ -150,20 +163,26 @@ class Bot:
                 nextThink = 0.1
 
         elif (self.state == STATE_SET_FORMATION):
-            if (clickAt(LOW_HP, confidence=0.9)):
+            lowHp = getImagePos(LOW_HP)
+            
+            if (lowHp and not self.repair):
                 print("Repairing...")
-                time.sleep(1.0)
-                clickAt(OK_REPAIR)
-                nextThink = 0.8
-            elif (clickAt(FORMATION)):
+                clickAt(LOW_HP)
+                time.sleep(1.5)
+                clickAt(OK_REPAIR, confidence=0.9)
                 nextThink = 1.5
+                self.repair = True
+            
+            elif (clickAt(FORMATION)):
+                nextThink = 1.8
                 self.state = STATE_SWAP_DPS
+                self.repair = False
             else:
-                nextThink = 0.1
+                nextThink = 0.5
 
         elif (self.state == STATE_SWAP_DPS):
             if (clickAt(COMBAT_EFFECTIVENESS, offset=(-100, 100))):
-                nextThink = 1.5
+                nextThink = 2.5
                 self.state = STATE_SELECT_DPS
             else:
                 nextThink = 0.1
@@ -174,8 +193,8 @@ class Bot:
                 self.state = STATE_BACK_TO_GAME
             else:
                 ui.moveTo(withRandPos(self.center, 40))
-                ui.scroll(-80)
-                nextThink = 0.2
+                ui.scroll(-150)
+                nextThink = 0.3
 
         elif (self.state == STATE_BACK_TO_GAME):
             if (doTask(BACK_BTN, CMD_POST)):
@@ -187,7 +206,7 @@ class Bot:
         elif (self.state == STATE_SPAWN_MAIN_ECHELON):
             # Spawn main echelon
             if (doTask(CMD_POST, OK_BTN)):
-                nextThink = 0.2
+                nextThink = 0.1
                 self.state = STATE_DEPLOY_MAIN_ECHELON
             else:
                 nextThink = 0.1
@@ -198,12 +217,12 @@ class Bot:
                 nextThink = 0.0
                 self.state = STATE_START_GAME
             else:
-                nextThink = 0.1
+                nextThink = 0.05
 
         elif (self.state == STATE_START_GAME):
             # Start game
             if (clickAt(START)):
-                nextThink = 1.0
+                nextThink = 0.8
                 self.state = STATE_SPAWN_SECOND_ECHELON
                 
                 self.attempt += 1
@@ -214,7 +233,7 @@ class Bot:
         elif (self.state == STATE_SPAWN_SECOND_ECHELON):
             # Spawn second echelon
             if (doTask(HELIPORT, OK_BTN)):
-                nextThink = 0.2
+                nextThink = 0.1
                 self.state = STATE_DEPLOY_SECOND_ECHELON
             else:
                 nextThink = 0.1
@@ -241,7 +260,7 @@ class Bot:
                 isLoading = True
 
                 while (isLoading):
-                    ui.sleep(1.0)
+                    ui.sleep(1.5)
                     clickAt(CMD_POST)
                     isLoading = getImagePos(LOAD_SUPPLY)
                 
@@ -260,28 +279,28 @@ class Bot:
 
         elif (self.state == STATE_SELECT_POINT1):
             # Resupply main echelon
-            if (clickAt(POINT1, offset=(-40, 0))):
-                nextThink = 0.2
+            if (clickAt(POINT1, offset=(-20, 0))):
+                nextThink = 0.1
                 self.state = STATE_SELECT_POINT2
             else:
-                nextThink = 0.2
+                nextThink = 0.4
                 ui.moveTo(withRandPos(self.freeArea, 40))
-                ui.scroll(100)
+                ui.scroll(200)
 
         elif (self.state == STATE_SELECT_POINT2):
             # Resupply main echelon
             if (clickAt(POINT2, offset=(-20, -20))):
-                nextThink = 0.1
+                nextThink = 0.2
                 self.state = STATE_EXECUTE
             else:
-                nextThink = 0.2
+                nextThink = 0.4
                 ui.moveTo(withRandPos(self.freeArea, 30))
-                ui.scroll(100)
+                ui.scroll(150)
 
         elif (self.state == STATE_EXECUTE):
             # Resupply main echelon
             if (clickAt(EXECUTE)):
-                nextThink = 0.5
+                nextThink = 0.1
                 self.state = STATE_WAIT
             else:
                 nextThink = 0.1
@@ -336,10 +355,19 @@ class Bot:
             time.sleep(2.0)
 
             #print("RETURN_BASE")
-            clickAt(RETURN_BASE)
+            #clickAt(RETURN_BASE)
+            
+            combatBtn = False
+            logisticRes = False
+
+            while (not combatBtn and not logisticRes):
+                clickAt(RETURN_BASE)
+                time.sleep(0.2)
+                combatBtn = getImagePos(COMBAT)
+                logisticRes = getImagePos(LOGISTIC_RESULT)
 
             self.state = STATE_BEGIN_COMBAT
-            nextThink = 3.0
+            nextThink = 0.1
 
         if (nextThink > 0.0):
             time.sleep(nextThink)
