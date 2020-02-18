@@ -352,7 +352,7 @@ class Bot:
             #print("DISMANTLE")
 
             clickAt(DISMANTLE)
-            time.sleep(2.0)
+            time.sleep(3.5)
 
             #print("RETURN_BASE")
             #clickAt(RETURN_BASE)
